@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIT1045 - C++ 交互式练习 (完整版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f0f2f5; }
+        .font-mono { font-family: 'Roboto Mono', monospace; }
+        .panel { background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .code-line { padding: 0.25rem 0.75rem; border-radius: 4px; transition: background-color 0.3s; white-space: pre; }
+        .code-line.active { background-color: #dbeafe; font-weight: 500; }
+        .state-panel h3 { border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; color: #1f2937; }
+        .value-changed { animation: flash 0.8s ease; }
+        @keyframes flash { 0%, 100% { background-color: transparent; } 50% { background-color: #fef08a; } }
+        .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #1d4ed8; }
+        .btn-secondary { background-color: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background-color: #d1d5db; }
+        .btn:disabled { background-color: #d1d5db; cursor: not-allowed; }
+        .nav-tabs { display: flex; flex-wrap: wrap; border-bottom: 2px solid #e5e7eb; margin-bottom: 1rem; }
+        .tab { padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; color: #6b7280; text-align: center; }
+        .tab.active { color: #2563eb; border-color: #2563eb; }
+        .quiz-option { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 0.5rem; transition: all 0.2s; }
+        .quiz-option:hover:not(:disabled) { border-color: #60a5fa; background-color: #f0f9ff; }
+        .quiz-option.correct { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .quiz-option.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .key-point {
+            display: flex;
+            padding: 0.75rem;
+            border-left: 3px solid #6366f1;
+            background-color: #fafafa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">FIT1045 C++ 交互式练习 (完整版)</h1>
+        <p class="text-md text-gray-600 mt-1">覆盖全部九道题，结合模拟执行与概念测验</p>
+    </header>
+
+    <div class="nav-tabs" id="question-tabs"></div>
+    <div id="content-container"></div>
+
+    <script>
+    const questions = [
+        {
+            title: 'Q1: 术语定义',
+            type: 'quiz',
+            quizQuestions: [
+                { question: "哪个术语指的是在函数或代码块内部声明的变量，其作用域仅限于该代码块？", options: ["全局变量", "局部变量", "参数", "结构体"], answer: 1, explanation: "局部变量（Local Variable）的作用域仅限于其声明所在的函数或代码块。" },
+                { question: "在所有函数之外声明，程序的任何部分都可以访问的变量称为什么？", options: ["局部变量", "枚举", "全局变量", "数组"], answer: 2, explanation: "全局变量（Global Variable）定义在所有函数之外，因此它的生命周期和作用域是全局的。" },
+                { question: "函数定义中用于接收传入值的“占位符”叫什么？", options: ["实参 (Argument)", "返回 (Return)", "参数 (Parameter)", "异常 (Exception)"], answer: 2, explanation: "参数（Parameter）是函数定义的一部分，它声明了函数期望接收的数据的类型和名称。" },
+                { question: "调用函数时传递给函数的具体值被称为什么？", options: ["实参 (Argument)", "参数 (Parameter)", "局部变量", "返回值"], answer: 0, explanation: "实参（Argument）是在函数调用时提供的，用来初始化对应参数的具体值。" },
+                { question: "一个执行特定任务并返回一个结果的代码块，通常称为什么？", options: ["过程 (Procedure)", "函数 (Function)", "结构体 (Struct)", "循环 (Loop)"], answer: 1, explanation: "函数（Function）封装了一系列操作，并且通常会通过 `return` 语句返回一个计算结果。" },
+                { question: "一个执行特定动作但不返回任何值的代码块（在C++中用`void`表示）是什么？", options: ["函数 (Function)", "数组 (Array)", "过程 (Procedure)", "枚举 (Enumeration)"], answer: 2, explanation: "过程（Procedure）是一种特殊的函数，它的返回类型是 `void`，表示它不返回任何值，只执行操作。" },
+                { question: "哪个关键字用于从函数中交还一个值并立即结束该函数的执行？", options: ["break", "continue", "goto", "return"], answer: 3, explanation: "`return` 关键字用于结束当前函数的执行，并将一个值（如果函数有返回值类型）返回给调用者。" },
+                { question: "当程序运行时发生错误，打断了正常的代码执行流程，这被称为什么？", options: ["编译错误", "语法错误", "逻辑错误", "异常 (Exception)"], answer: 3, explanation: "异常（Exception）是在程序运行时发生的意外事件，它会中断代码的正常流程。" },
+                { question: "哪种结构允许你将不同类型的数据（如姓名、ID、分数）打包成一个单一的实体？", options: ["数组 (Array)", "枚举 (Enumeration)", "结构体 (Struct)", "函数 (Function)"], answer: 2, explanation: "结构体（Struct）是创建自定义复合数据类型的工具，非常适合用来表示真实世界的实体。" },
+                { question: "为了提高代码可读性，将一组命名的整数常量组合在一起的数据类型是什么？", options: ["数组 (Array)", "结构体 (Struct)", "枚举 (Enumeration)", "常量 (Constant)"], answer: 2, explanation: "枚举（Enumeration）允许我们用有意义的名字（如 RED, GREEN）来代替无意义的数字（如 0, 1），增强代码的可读性和可维护性。" },
+                { question: "一个固定大小的、存储相同类型元素的有序集合是什么？", options: ["结构体 (Struct)", "数组 (Array)", "链表 (Linked List)", "集合 (Set)"], answer: 1, explanation: "数组（Array）在内存中是连续存储的，通过索引可以快速访问任何元素，但其大小在创建时就已固定。" }
+            ]
+        },
+        {
+            title: 'Q2: 代码执行', type: 'simulator',
+            code: [ 'int first[5] = {1,1,3,4,5};', 'int second[3] = {2,2,3};', 'int result[5] = {0,0,0,0,0};', 'int i=0, j=0, k=0;', 'while (i < 5 && j < 3 && k < 5) {', '  if (first[i] <= second[j]) {', '    result[k] = first[i];', '    i++;', '  } else {', '    result[k] = second[j];', '    j++;', '  }', '  k++;', '}', '// 后续循环' ],
+            steps: [ { line: 0, vars: {}, mem: { 'first': [1,1,3,4,5] }, exp: '声明并初始化 `first` 数组。' }, { line: 1, vars: {}, mem: { 'second': [2,2,3] }, exp: '声明并初始化 `second` 数组。' }, { line: 2, vars: {}, mem: { 'result': [0,0,0,0,0] }, exp: '声明并初始化 `result` 数组。' }, { line: 3, vars: { i: 0, j: 0, k: 0 }, exp: '声明并初始化循环变量 i, j, k。' }, { line: 4, exp: '进入循环。检查条件: i(0)<5 && j(0)<3 && k(0)<5，结果为真。' }, { line: 5, exp: '进入条件判断。比较 first[0](1) 与 second[0](2)。' }, { line: 6, mem: { result: (s) => { s.mem.result[s.vars.k] = s.mem.first[s.vars.i]; return s.mem.result; } }, exp: '1 <= 2 为真。result[0] 被赋值为 first[0] 的值 1。' }, { line: 7, vars: { i: (s) => s.vars.i + 1 }, exp: 'i 自增为 1。' }, { line: 12, vars: { k: (s) => s.vars.k + 1 }, exp: 'k 自增为 1。' }, { line: 4, exp: '再次循环。检查条件: i(1)<5 && j(0)<3 && k(1)<5，结果为真。' }, { line: 5, exp: '比较 first[1](1) 与 second[0](2)。' }, { line: 6, mem: { result: (s) => { s.mem.result[s.vars.k] = s.mem.first[s.vars.i]; return s.mem.result; } }, exp: '1 <= 2 为真。result[1] 被赋值为 first[1] 的值 1。' }, { line: 7, vars: { i: (s) => s.vars.i + 1 }, exp: 'i 自增为 2。' }, { line: 12, vars: { k: (s) => s.vars.k + 1 }, exp: 'k 自增为 2。' }, { line: 4, exp: '再次循环。检查条件: i(2)<5 && j(0)<3 && k(2)<5，结果为真。' }, { line: 5, exp: '比较 first[2](3) 与 second[0](2)。' }, { line: 9, mem: { result: (s) => { s.mem.result[s.vars.k] = s.mem.second[s.vars.j]; return s.mem.result; } }, exp: '3 <= 2 为假。进入else分支。result[2] 被赋值为 second[0] 的值 2。' }, { line: 10, vars: { j: (s) => s.vars.j + 1 }, exp: 'j 自增为 1。' }, { line: 12, vars: { k: (s) => s.vars.k + 1 }, exp: 'k 自增为 3。' }, { line: 4, exp: '再次循环。检查条件: i(2)<5 && j(1)<3 && k(3)<5，结果为真。' }, { line: 5, exp: '比较 first[2](3) 与 second[1](2)。' }, { line: 9, mem: { result: (s) => { s.mem.result[s.vars.k] = s.mem.second[s.vars.j]; return s.mem.result; } }, exp: '3 <= 2 为假。result[3] 被赋值为 second[1] 的值 2。' }, { line: 10, vars: { j: (s) => s.vars.j + 1 }, exp: 'j 自增为 2。' }, { line: 12, vars: { k: (s) => s.vars.k + 1 }, exp: 'k 自增为 4。' }, { line: 4, exp: '再次循环。检查条件: i(2)<5 && j(2)<3 && k(4)<5，结果为真。' }, { line: 5, exp: '比较 first[2](3) 与 second[2](3)。' }, { line: 6, mem: { result: (s) => { s.mem.result[s.vars.k] = s.mem.first[s.vars.i]; return s.mem.result; } }, exp: '3 <= 3 为真。result[4] 被赋值为 first[2] 的值 3。' }, { line: 7, vars: { i: (s) => s.vars.i + 1 }, exp: 'i 自增为 3。' }, { line: 12, vars: { k: (s) => s.vars.k + 1 }, exp: 'k 自增为 5。' }, { line: 4, exp: '再次循环。检查条件: k(5)<5 为假。循环终止。' }, { line: 14, exp: '后续的循环由于 k 已达到5，条件不满足，将被跳过。程序执行结束。' } ]
+        },
+        {
+            title: 'Q3: student_data',
+            type: 'code_review',
+            prompt: '编写 C++ 代码来声明一个 `student_data` 结构体，以模拟一个学生。',
+            standardAnswer: `struct student_data
+{
+    std::string name;
+    int id;
+    int score;
+};`,
+            keyPoints: [
+                "**`struct` 关键字**: 用于定义一个新的、可以将不同类型数据（如文本、整数）组合在一起的自定义数据类型。",
+                "**成员变量**: `name`, `id`, `score` 是这个结构体的成员，每个 `student_data` 类型的变量都会包含这三个部分。",
+                "**分号结尾**: 结构体定义必须以分号 `;` 结束。"
+            ]
+        },
+        {
+            title: 'Q4: student_collection',
+            type: 'code_review',
+            prompt: '编写 C++ 代码来声明一个可以处理最多100个学生的结构体。',
+            standardAnswer: `const int MAX_STUDENTS = 100;
+
+struct student_collection
+{
+    student_data students[MAX_STUDENTS];
+    int count = 0;
+};`,
+            keyPoints: [
+                "**`const int`**: 用于定义一个常量 `MAX_STUDENTS`。使用常量可以方便地在同一个地方修改学生上限，并且防止其值在程序中被意外改变。",
+                "**固定大小数组**: `students[MAX_STUDENTS]` 创建了一个能容纳100个 `student_data` 的数组。",
+                "**`int count`**: 这个成员至关重要，它像一个计数器，记录了数组中当前实际存放了多少个学生。所有操作（添加、遍历）都应依赖 `count`，而不是数组的总大小。"
+            ]
+        },
+        {
+            title: 'Q5: print_student',
+            type: 'code_review',
+            prompt: '编写一个名为 `print_student` 的 C++ 过程，用于将学生信息输出到终端。',
+            standardAnswer: `void print_student(const student_data &student)
+{
+    std::cout << student.name << " (" << student.id << ") " << student.score;
+
+    if (student.score >= 80)
+    {
+        std::cout << " congratulations";
+    }
+    std::cout << std::endl;
+}`,
+            keyPoints: [
+                "**`void` 返回类型**: 这个过程（procedure）只负责打印，不需要返回任何计算结果，因此使用 `void`。",
+                "**`const student_data &student`**: 这是C++中的一个重要实践。`&` (引用) 表示我们直接使用原始的学生数据，而不是复制一份，这能提高效率。`const` (常量) 则保证这个函数不会意外地修改传入的学生数据，使代码更安全可靠。",
+                "**`.` 操作符**: 使用点操作符 `.` 来访问结构体 `student` 内部的成员变量，如 `student.name`。"
+            ]
+        },
+        {
+            title: 'Q6: read_student',
+            type: 'code_review',
+            prompt: '编写一个名为 `read_student` 的 C++ 函数，用于从终端读取一名学生的信息。',
+            standardAnswer: `student_data read_student()
+{
+    student_data result;
+    result.id = read_integer("Enter ID: ");
+    result.name = read_string("Enter Name: ");
+
+    do {
+        result.score = read_integer("Enter Score: ");
+    } while (result.score < 0 || result.score > 100);
+
+    return result;
+}`,
+            keyPoints: [
+                "**`student_data` 返回类型**: 这个函数的功能是创建一个学生对象并返回，所以返回类型是 `student_data`。",
+                "**`do-while` 循环**: 这种循环非常适合输入验证。它保证循环体（`read_integer`）至少执行一次，然后才检查条件（分数是否有效），完全符合“先输入，后判断”的逻辑。",
+                "**`return` 语句**: 函数执行完毕后，使用 `return` 将包含了所有输入信息的 `result` 变量交还给调用者。"
+            ]
+        },
+        {
+            title: 'Q7: calculate_average',
+            type: 'code_review',
+            prompt: '编写一个名为 `calculate_average_score` 的 C++ 函数，用于计算学生们的平均分。',
+            standardAnswer: `double calculate_average_score(const student_collection &collection)
+{
+    if (collection.count == 0)
+    {
+        return 0.0;
+    }
+
+    double total_score = 0.0;
+    for (int i = 0; i < collection.count; i++)
+    {
+        total_score += collection.students[i].score;
+    }
+    return total_score / collection.count;
+}`,
+            keyPoints: [
+                "**`double` 返回类型**: 平均分很可能是小数，所以函数的返回类型必须是 `double` 以保证精度。",
+                "**处理边界情况**: `if (collection.count == 0)` 是一个重要的防御性编程措施。如果没有这个检查，当集合为空时，程序会尝试除以零，导致运行时错误。",
+                "**`for` 循环边界**: 循环必须遍历到 `collection.count`，而不是 `MAX_STUDENTS`。我们只关心数组中实际存在的学生。",
+                "**浮点数除法**: 因为 `total_score` 是 `double` 类型，所以最后的除法 `total_score / collection.count` 会执行浮点数除法，得到精确的结果。"
+            ]
+        },
+        {
+            title: 'Q8: add_student',
+            type: 'code_review',
+            prompt: '编写一个名为 `add_student` 的 C++ 过程，用于向集合中添加一名新学生。',
+            standardAnswer: `void add_student(student_collection &collection, const student_data &new_student)
+{
+    if (collection.count < MAX_STUDENTS)
+    {
+        collection.students[collection.count] = new_student;
+        collection.count++;
+    }
+    // 题目要求：如果数组满了则忽略数据。
+    // 如果要求输出信息，可以加一个 else { std::cout << "System Full"; }
+}`,
+            keyPoints: [
+                "**`student_collection &collection`**: 第一个参数**必须是引用 (`&`)**。如果不是引用，函数操作的将是 `collection` 的一个副本，对 `count` 的修改将不会影响到 `main` 函数中的原始变量。",
+                "**防止数组溢出**: `if (collection.count < MAX_STUDENTS)` 是一个安全检查，确保在添加新学生之前数组还有空位。",
+                "**先赋值，再递增**: 代码 `collection.students[collection.count] = new_student;` 利用了 `count` 的当前值作为新元素的索引。添加成功后，`collection.count++;` 将计数器更新，为下一次添加做准备。"
+            ]
+        },
+        {
+            title: 'Q9: Main函数执行', type: 'simulator',
+            code: [ 'int main() {', '  student_collection my_students;', '  // 模拟第一次循环 (输入: "Fred", 2, 52)', '  student_data s1 = { "Fred", 2, 52 };', '  add_student(my_students, s1);', '  // 模拟第二次循环 (输入: "Wilma", 5, 85)', '  student_data s2 = { "Wilma", 5, 85 };', '  add_student(my_students, s2);', '  // 循环结束', '  // ... 打印和计算平均分', '}' ],
+            steps: [ { line: 0, exp: '进入 main 函数。' }, { line: 1, vars: { 'my_students.count': 0 }, mem: { 'my_students.students': [] }, exp: '声明 `student_collection` 变量 `my_students`。count 初始化为 0。' }, { line: 3, vars: { 's1.name': '"Fred"', 's1.id': 2, 's1.score': 52 }, exp: '模拟第一次循环，调用 `read_student()` 得到学生 s1。' }, { line: 4, vars: { 'my_students.count': 1 }, mem: { 'my_students.students': (s) => { s.mem['my_students.students'].push({ name: "Fred", id: 2, score: 52 }); return s.mem['my_students.students']; } }, exp: '调用 `add_student()`。s1被添加到 my_students 数组中，count 增为 1。' }, { line: 6, vars: { 's2.name': '"Wilma"', 's2.id': 5, 's2.score': 85 }, exp: '模拟第二次循环，调用 `read_student()` 得到学生 s2。' }, { line: 7, vars: { 'my_students.count': 2 }, mem: { 'my_students.students': (s) => { s.mem['my_students.students'].push({ name: "Wilma", id: 5, score: 85 }); return s.mem['my_students.students']; } }, exp: '调用 `add_student()`。s2被添加到 my_students 数组中，count 增为 2。' }, { line: 8, exp: '模拟输入 "N"，while 循环结束。' }, { line: 9, vars: { 'average': 68.5 }, exp: '程序继续执行打印和计算平均分的操作。最终平均分为 (52+85)/2 = 68.5。' }, { line: 10, exp: '程序执行结束。' } ]
+        }
+    ];
+
+    const tabsContainer = document.getElementById('question-tabs');
+    const contentContainer = document.getElementById('content-container');
+    let activeController = null;
+
+    class Simulator {
+        constructor(question, container) { this.question = question; this.container = container; this.init(); }
+        init() {
+            this.container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="panel font-mono lg:col-span-3"><div id="code-display"></div><div id="explanation" class="mt-4 bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-3 rounded-r-md"></div></div>
+                <div class="panel font-mono lg:col-span-2"><div id="vars-display"></div><div id="mem-display" class="mt-6"></div></div>
+            </div>
+            <div class="panel flex justify-between items-center mt-4"><button id="reset-btn" class="btn btn-secondary"><i class="fas fa-undo"></i> 重置</button><div class="font-mono text-gray-600">步骤: <span id="step-counter">0</span> / ${this.question.steps.length}</div><button id="next-btn" class="btn btn-primary">下一步 <i class="fas fa-arrow-right"></i></button></div>`;
+            Object.assign(this, { codeDisplay: this.container.querySelector('#code-display'), varsDisplay: this.container.querySelector('#vars-display'), memDisplay: this.container.querySelector('#mem-display'), explanation: this.container.querySelector('#explanation'), stepCounter: this.container.querySelector('#step-counter'), nextBtn: this.container.querySelector('#next-btn'), resetBtn: this.container.querySelector('#reset-btn') });
+            this.nextBtn.addEventListener('click', () => this.next()); this.resetBtn.addEventListener('click', () => this.reset()); this.reset();
+        }
+        reset() { this.state = { step: 0, vars: {}, mem: {} }; this.lastChanged = { vars: [], mem: [] }; this.explanation.textContent = '请点击“下一步”开始执行。'; this.nextBtn.disabled = false; this.render(); }
+        next() {
+            if (this.state.step >= this.question.steps.length) return;
+            const stepData = this.question.steps[this.state.step]; this.lastChanged = { vars: [], mem: [] };
+            if (stepData.vars) for (const k in stepData.vars) { this.state.vars[k] = typeof stepData.vars[k] === 'function' ? stepData.vars[k](this.state) : stepData.vars[k]; this.lastChanged.vars.push(k); }
+            if (stepData.mem) for (const k in stepData.mem) { this.state.mem[k] = typeof stepData.mem[k] === 'function' ? stepData.mem[k](this.state) : stepData.mem[k]; this.lastChanged.mem.push(k); }
+            this.state.step++; this.render();
+        }
+        render() {
+            const stepData = this.state.step > 0 ? this.question.steps[this.state.step - 1] : null;
+            this.codeDisplay.innerHTML = this.question.code.map((l, i) => `<div class="code-line ${stepData && i === stepData.line ? 'active' : ''}">${l.replace(/</g, "&lt;")}</div>`).join('');
+            let varsHTML = '<h3><i class="fas fa-microchip mr-2"></i>变量</h3>'; Object.keys(this.state.vars).forEach(k => { varsHTML += `<div class="flex justify-between p-2 rounded ${this.lastChanged.vars.includes(k) ? 'value-changed' : ''}"><span class="text-gray-600">${k}</span> <span class="text-blue-700 font-bold">${this.state.vars[k]}</span></div>`; }); this.varsDisplay.innerHTML = varsHTML;
+            let memHTML = '<h3 class="mt-6"><i class="fas fa-memory mr-2"></i>内存 (数组)</h3>'; Object.keys(this.state.mem).forEach(k => { const val = this.state.mem[k]; let fVal = Array.isArray(val) ? `[ ${val.map(v => JSON.stringify(v).replace(/"/g, ' ')).join(', ')} ]` : JSON.stringify(val); memHTML += `<div class="flex justify-between p-2 rounded ${this.lastChanged.mem.includes(k) ? 'value-changed' : ''}"><span class="text-gray-600">${k}</span> <span class="text-blue-700 font-bold">${fVal}</span></div>`; }); this.memDisplay.innerHTML = memHTML;
+            if(stepData) this.explanation.textContent = stepData.exp;
+            this.stepCounter.textContent = this.state.step;
+            if (this.state.step >= this.question.steps.length) this.nextBtn.disabled = true;
+        }
+    }
+    class Quiz {
+        constructor(question, container) {
+            this.questionData = question;
+            this.container = container;
+            this.currentQ = 0;
+            this.init();
+        }
+        init() { this.render(); }
+        render() {
+            const q = this.questionData.quizQuestions[this.currentQ];
+            this.container.innerHTML = `
+                <div class="panel">
+                    <div class="mb-4">
+                        <p class="text-lg font-semibold text-gray-800">${this.currentQ + 1}. ${q.question}</p>
+                    </div>
+                    <div id="quiz-options"></div>
+                    <div id="quiz-feedback" class="mt-4 p-3 rounded-md text-sm" style="display: none;"></div>
+                    <div class="flex justify-between mt-4">
+                        <div class="text-gray-600">问题 ${this.currentQ + 1} / ${this.questionData.quizQuestions.length}</div>
+                        <button id="next-quiz-btn" class="btn btn-primary" style="display:none;">下一个问题</button>
+                    </div>
+                </div>`;
+            const optionsContainer = this.container.querySelector('#quiz-options');
+            q.options.forEach((opt, index) => {
+                const button = document.createElement('button');
+                button.className = 'quiz-option';
+                button.textContent = opt;
+                button.onclick = () => this.checkAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+            this.container.querySelector('#next-quiz-btn').onclick = () => {
+                this.currentQ++; this.render();
+            };
+        }
+        checkAnswer(selectedIndex) {
+            const q = this.questionData.quizQuestions[this.currentQ];
+            const feedbackEl = this.container.querySelector('#quiz-feedback');
+            const options = this.container.querySelectorAll('.quiz-option');
+            options.forEach(o => o.disabled = true);
+            if (selectedIndex === q.answer) {
+                options[selectedIndex].classList.add('correct');
+                feedbackEl.className = 'mt-4 p-3 rounded-md text-sm bg-green-100 border border-green-300 text-green-800';
+            } else {
+                options[selectedIndex].classList.add('incorrect');
+                options[q.answer].classList.add('correct');
+                feedbackEl.className = 'mt-4 p-3 rounded-md text-sm bg-red-100 border border-red-300 text-red-800';
+            }
+            feedbackEl.textContent = q.explanation;
+            feedbackEl.style.display = 'block';
+            if (this.currentQ < this.questionData.quizQuestions.length - 1) {
+                this.container.querySelector('#next-quiz-btn').style.display = 'inline-flex';
+            }
+        }
+    }
+    class CodeReview {
+        constructor(question, container) {
+            this.question = question;
+            this.container = container;
+            this.init();
+        }
+        init() { this.render(); }
+        render() {
+            this.container.innerHTML = `
+                <div class="panel">
+                    <p class="text-lg font-semibold text-gray-800 mb-4">${this.question.prompt}</p>
+                    <div class="text-center">
+                        <button id="show-answer-btn" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> 显示标准答案
+                        </button>
+                    </div>
+                    <div id="answer-container" class="mt-4" style="display: none;">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">标准答案</h3>
+                        <div class="font-mono bg-gray-50 p-4 rounded-md whitespace-pre-wrap">${this.question.standardAnswer.replace(/</g, "&lt;")}</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">关键点解析</h3>
+                        <div id="key-points-container" class="space-y-3"></div>
+                    </div>
+                </div>`;
+            
+            this.container.querySelector('#show-answer-btn').addEventListener('click', (e) => this.showAnswer(e.currentTarget));
+        }
+
+        showAnswer(button) {
+            button.style.display = 'none';
+            this.container.querySelector('#answer-container').style.display = 'block';
+
+            const keyPointsContainer = this.container.querySelector('#key-points-container');
+            let keyPointsHTML = '';
+            this.question.keyPoints.forEach(point => {
+                keyPointsHTML += `<div class="key-point"><i class="fas fa-lightbulb w-6 text-indigo-500"></i><span>${point}</span></div>`;
+            });
+            keyPointsContainer.innerHTML = keyPointsHTML;
+        }
+    }
+
+    function setActiveTab(index) {
+        document.querySelectorAll('.tab').forEach((tab, i) => tab.classList.toggle('active', i === index));
+        const question = questions[index];
+        contentContainer.innerHTML = '';
+        if (question.type === 'simulator') {
+            activeController = new Simulator(question, contentContainer);
+        } else if (question.type === 'quiz') {
+            activeController = new Quiz(question, contentContainer);
+        } else if (question.type === 'code_review') {
+            activeController = new CodeReview(question, contentContainer);
+        }
+    }
+    
+    questions.forEach((q, index) => {
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.textContent = q.title;
+        tab.addEventListener('click', () => setActiveTab(index));
+        tabsContainer.appendChild(tab);
+    });
+    
+    setActiveTab(0);
+    </script>
+</body>
+</html>
+
